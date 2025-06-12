@@ -25,7 +25,9 @@
         if source_orders:
             order = source_orders[0]
             # 1. 可分配处理状态
-            if order.get_next_step().is_free() or order.get_next_step().is_free_hum():
+            if order.get_next_step().is_free():
+                assignable_ratio = 1.0
+            elif order.get_next_step().type == "machine"and order.get_next_step().is_free_hum():
                 assignable_ratio = 1.0
             else:
                 assignable_ratio = 0.0
@@ -40,7 +42,6 @@
             # avg_waiting_time = self.time_calc.average_remaining_waiting_time()
             normalized_time = 1
             state_matrix[0][2] = normalized_time
-            
             # 4. 完成度信息
             total_steps = len(order.prod_steps)
             completed_steps = order.actual_step
@@ -56,7 +57,9 @@
                 # 1. 可分配处理状态：假设输出缓冲区最多只有一个订单
                 order = machine_orders[0]
                 # 判断下一步工作站是否空闲
-                if order.get_next_step().is_free() or  order.get_next_step().is_free_hum():
+                if order.get_next_step().is_free() or order.get_next_step().type == "sink":
+                    assignable_ratio = 1.0
+                elif order.get_next_step().type == "machine" and order.get_next_step().is_free_hum():
                     assignable_ratio = 1.0
                 else:
                     assignable_ratio = 0.0
