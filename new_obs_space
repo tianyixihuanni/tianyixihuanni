@@ -1,0 +1,45 @@
+# 基于待运输队列处理的处理的状态空间 
+##构建并返回传输代理的状态。状态是一个13维向量，基于待运输队列中的订单判断每个位置的状态。
+    def calculate_state(self):
+        # 初始化13维状态向量：1个source + 12个machine
+        # 索引0：source，索引1-12：machine 1-12
+        state_vector = [0.0] * 13
+        
+        # 获取所有工作站并按ID排序
+        all_machines = []
+        all_machines.extend(self.resources['machines'])
+        all_machines.sort(key=lambda x: x.id)
+        
+        # 获取source
+        source = self.resources['sources'][0]
+        
+        # 遍历待运输队列中的所有订单
+        for order in Transport.all_transp_orders:
+            if order.reserved:  # 跳过已预订的订单
+                continue
+            # 获取订单当前位置
+            current_location = order.current_location
+            # 判断订单的下一个处理步骤是否可用
+            next_step = order.get_next_step()
+            can_transport = False
+            # 检查下一步是否可用
+            if next_step.type == "sink":
+                # 如果下一步是sink，总是可以运输
+                can_transport = True
+            elif next_step.type == "machine":
+                # 检查机器工作站是否空闲
+                if next_step.is_free():
+                    can_transport = True
+                # 检查是否有空闲的人工工作站
+                elif next_step.is_free_hum():
+                    can_transport = True
+            # 如果可以运输，根据当前位置设置状态向量
+            if can_transport:
+                if current_location.type == "source":
+                    # 订单在source位置
+                    state_vector[0] = 1.0
+                elif current_location.type == "machine":
+                    # 订单在某个机器位置，找到对应的索引
+                    machine_index = current_location.id
+                    state_vector[machine_index-1] = 1.0
+        return state_vector 
