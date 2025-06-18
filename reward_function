@@ -1,0 +1,16 @@
+
+#  第一版——奖励
+  step_progress_weight = 0.6  # 逐步奖励权重
+  waiting_time_weight = 0.4  # 等待时间权重
+  step_ratio = self.next_action_order.actual_step / (len(self.next_action_order.prod_steps) - 1)
+  step_progress_reward = 20 * math.log1p(9 * step_ratio) / math.log1p(9)  # 归一化到 [0, 7]
+  print("step_progress_reward---------------------------------------:", step_progress_reward)
+  # 计算等待时间惩罚（订单等待时间越长，惩罚越大）
+  waiting_time = self.next_action_order.get_total_waiting_time()  # 获取订单总等待时间
+  # 使用指数衰减函数计算惩罚,避免惩罚过大
+  max_penalty = 5.0  # 最大惩罚值
+  decay_rate = 0.005  # 衰减率
+  waiting_time_penalty = -max_penalty * (1 - math.exp(-decay_rate * waiting_time))
+  # 打印waiting_time_penalty
+  print("waiting_time_penalty---------------------------------------:", waiting_time_penalty)
+  self.next_action_reward = (step_progress_weight * step_progress_reward) + waiting_time_penalty * waiting_time_weight
